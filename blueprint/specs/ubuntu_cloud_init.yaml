@@ -1,0 +1,10 @@
+#cloud-config
+ssh_pwauth: True
+chpasswd:
+  list: |
+     @@{UBUNTU.username}@@:@@{UBUNTU.secret}@@
+  expire: False
+users:
+  - name: @@{UBUNTU.username}@@
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    shell: /bin/bash

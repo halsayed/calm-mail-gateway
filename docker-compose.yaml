@@ -1,0 +1,8 @@
+version: "3.0"
+services:
+  mail_api:
+    build: ./calm-mail-gateway/.
+    restart: always
+    environment:
+      - SMTP_SERVER=@@{ADDRESS}@@
+      - FROM_EMAIL=@@{EMAIL_ADDRESS}@@
