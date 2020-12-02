@@ -85,6 +85,7 @@ class PackagePostfix(Package):
         CalmTask.Exec.ssh(name='install_docker', filename='scripts/package_install_docker.sh')
         CalmTask.Delay(name='wait_for_reboot', delay_seconds=20)
         CalmTask.Exec.ssh(name='install_postfix', filename='scripts/package_install_postfix.sh')
+        CalmTask.Exec.ssh(name='install_mail_api', filename='scripts/package_install_mail_api.sh')
 
 
 class DefaultDeployment(Deployment):

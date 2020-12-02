@@ -10,6 +10,8 @@ services:
   mail_api:
     build: ./calm-mail-gateway/.
     restart: always
+    ports:
+      - "80:5000"
     environment:
       - SMTP_SERVER=@@{ADDRESS}@@
       - FROM_EMAIL=@@{EMAIL_ADDRESS}@@' | tee /var/app/docker-compose.yaml
