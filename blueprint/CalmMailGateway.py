@@ -34,7 +34,7 @@ ubuntu_20_04_cloud = vm_disk_package(
 )
 
 
-class postfix(Service):
+class EmailAPI(Service):
     @action
     def __create__(self):
         """System action for creating an application"""
@@ -48,7 +48,7 @@ class MailGatewaycalm_VMResources(AhvVmResources):
     vCPUs = 2
     cores_per_vCPU = 1
     disks = [AhvVmDisk.Disk.Scsi.cloneFromVMDiskPackage(ubuntu_20_04_cloud, bootable=True)]
-    nics = [AhvVmNic.NormalNic.ingress('Network-02', cluster='Middle-East-Lab-cluster2')]
+    nics = [AhvVmNic.NormalNic.ingress('Network-01')]
     guest_customization = AhvVmGC.CloudInit(filename='specs/ubuntu_cloud_init.yaml')
 
 
@@ -73,9 +73,9 @@ class MailGatewayVM(Substrate):
     )
 
 
-class PackagePostfix(Package):
+class PackageEmailAPI(Package):
 
-    services = [ref(postfix)]
+    services = [ref(EmailAPI)]
 
     @action
     def __install__(self):
@@ -84,7 +84,6 @@ class PackagePostfix(Package):
         CalmTask.Delay(name='wait_for_disk_resize', delay_seconds=20)
         CalmTask.Exec.ssh(name='install_docker', filename='scripts/package_install_docker.sh')
         CalmTask.Delay(name='wait_for_reboot', delay_seconds=20)
-        CalmTask.Exec.ssh(name='install_postfix', filename='scripts/package_install_postfix.sh')
         CalmTask.Exec.ssh(name='install_mail_api', filename='scripts/package_install_mail_api.sh')
 
 
@@ -94,15 +93,13 @@ class DefaultDeployment(Deployment):
     max_replicas = "1"
     default_replicas = "1"
 
-    packages = [ref(PackagePostfix)]
+    packages = [ref(PackageEmailAPI)]
     substrate = ref(MailGatewayVM)
 
 
 class Default(Profile):
 
     deployments = [DefaultDeployment]
-    NET_WHITELIST = CalmVariable.Simple('10.0.0.0\/8', runtime=False, label='Network Whitelist')
-    DOMAIN_NAME = CalmVariable.Simple('ntnx.me', is_mandatory=True, runtime=True, label='Domain Name')
     GMAIL_PASSWORD = CalmVariable.Simple.Secret(email_password, is_mandatory=True, runtime=True, label='Gmail Password')
     GMAIL_ADDRESS = CalmVariable.Simple(email_address, is_mandatory=True, runtime=True, label='Gmail Account')
 
@@ -110,8 +107,8 @@ class Default(Profile):
 class CalmMailGateway(Blueprint):
     """Rest API gateway to send email messages"""
 
-    services = [postfix]
-    packages = [PackagePostfix, ubuntu_20_04_cloud]
+    services = [EmailAPI]
+    packages = [PackageEmailAPI, ubuntu_20_04_cloud]
     substrates = [MailGatewayVM]
     profiles = [Default]
     credentials = [UBUNTU]

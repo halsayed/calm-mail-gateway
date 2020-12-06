@@ -1,11 +1,12 @@
+import smtplib, ssl
+
+from datetime import datetime, timezone
 from flask import Flask
 from flask_restx import Api, Resource, fields
 from werkzeug.middleware.proxy_fix import ProxyFix
-from datetime import datetime, timezone
-import smtplib
 
-from config import smtp_server, smtp_port, from_email
-from config import debug, log
+from config import Config, log
+
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app)
@@ -59,8 +60,15 @@ class Mail(Resource):
         data = api.payload
         message = f'Subject: {data["subject"]}\n\n{data["body"]}'
         try:
-            server = smtplib.SMTP(smtp_server, smtp_port)
-            server.sendmail(from_email, data['to'], message)
+            server = smtplib.SMTP(Config.smtp_server, Config.smtp_port)
+            if Config.use_starttls:
+                context = ssl.create_default_context()
+                server.starttls(context=context)
+
+            if Config.smtp_password:
+                server.login(Config.smtp_username, Config.smtp_password)
+
+            server.sendmail(Config.from_email, data['to'], message)
         except Exception as e:
             log.error(f'mail send failed with error: {e}')
             api.abort(500, f'mail send failed with error: {e}')
@@ -72,4 +80,4 @@ class Mail(Resource):
 
 
 if __name__ == '__main__':
-    app.run(debug=debug, host='0.0.0.0')
+    app.run(debug=Config.debug, host='0.0.0.0')
