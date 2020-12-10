@@ -61,9 +61,11 @@ class Mail(Resource):
         message = f'Subject: {data["subject"]}\n\n{data["body"]}'
         try:
             server = smtplib.SMTP(Config.smtp_server, Config.smtp_port)
+            server.ehlo()
             if Config.use_starttls:
                 context = ssl.create_default_context()
                 server.starttls(context=context)
+                server.ehlo()
 
             if Config.smtp_password:
                 server.login(Config.smtp_username, Config.smtp_password)
